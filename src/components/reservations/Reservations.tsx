@@ -1,7 +1,39 @@
-import { useState, useEffect } from 'react';
-import { Calendar, Clock, Users, MapPin, Plus, X } from 'lucide-react';
+import { Calendar } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { supabase } from '../../lib/supabase';
+
+export const Reservations = () => {
+  const { user } = useAuth();
+
+  return (
+    <div className="p-6 space-y-6">
+      <div className="bg-white rounded-lg shadow-sm p-6">
+        <h1 className="text-2xl font-bold text-slate-900 mb-4">
+          Reservaciones de Áreas Comunes
+        </h1>
+        <p className="text-slate-600">
+          Hola {user?.nombre}, esta sección estará disponible próximamente.
+        </p>
+      </div>
+
+      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+        <div className="flex items-center">
+          <Calendar className="w-6 h-6 text-yellow-600 mr-3" />
+          <div>
+            <h3 className="text-lg font-semibold text-yellow-800">
+              🚧 En Desarrollo
+            </h3>
+            <p className="text-yellow-700 mt-1">
+              El sistema de reservaciones se integrará con la API de Laravel próximamente.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/*
+// TODO: Código original comentado temporalmente
 
 interface CommonArea {
   id: string;
@@ -446,3 +478,4 @@ export const Reservations = () => {
     </div>
   );
 };
+*/

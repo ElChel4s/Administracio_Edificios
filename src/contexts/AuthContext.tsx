@@ -1,33 +1,10 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { User, Session } from '@supabase/supabase-js';
-import { supabase } from '../lib/supabase';
-
-interface UserProfile {
-  id: string;
-  email: string;
-  nombre: string;
-  telefono: string | null;
-  rol: 'administrador' | 'residente' | 'visitante';
-  activo: boolean;
-}
-
-interface ResidentData {
-  id: string;
-  usuario_id: string;
-  unidad: string;
-  piso: string | null;
-  torre: string | null;
-  fecha_ingreso: string | null;
-  es_propietario: boolean;
-}
+import { createContext, useContext, useEffect, useState, ReactNode, useMemo, useCallback } from 'react';
+import { apiService, User } from '../lib/api';
 
 interface AuthContextType {
   user: User | null;
-  session: Session | null;
-  userProfile: UserProfile | null;
-  residentData: ResidentData | null;
   loading: boolean;
-  signUp: (email: string, password: string, nombre: string, rol: 'administrador' | 'residente' | 'visitante') => Promise<void>;
+  token: string | null;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -45,123 +22,93 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [residentData, setResidentData] = useState<ResidentData | null>(null);
+  const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchUserProfile = async (userId: string) => {
-    const { data, error } = await supabase
-      .from('usuarios')
-      .select('*')
-      .eq('id', userId)
-      .maybeSingle();
-
-    if (error) {
-      console.error('Error fetching user profile:', error);
-      return;
-    }
-
-    if (data) {
-      setUserProfile(data);
-
-      if (data.rol === 'residente') {
-        const { data: residentData, error: residentError } = await supabase
-          .from('residentes')
-          .select('*')
-          .eq('usuario_id', userId)
-          .maybeSingle();
-
-        if (!residentError && residentData) {
-          setResidentData(residentData);
-        }
+  const refreshProfile = useCallback(async () => {
+    try {
+      const response = await apiService.getMe();
+      if (response.success) {
+        setUser(response.user);
+        localStorage.setItem('auth_user', JSON.stringify(response.user));
       }
+    } catch (error) {
+      console.error('Error refreshing profile:', error);
+      // Si falla, hacer logout
+      setUser(null);
+      setToken(null);
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('auth_user');
     }
-  };
-
-  const refreshProfile = async () => {
-    if (user) {
-      await fetchUserProfile(user.id);
-    }
-  };
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchUserProfile(session.user.id).then(() => setLoading(false));
-      } else {
-        setLoading(false);
-      }
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      (async () => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          await fetchUserProfile(session.user.id);
-        } else {
-          setUserProfile(null);
-          setResidentData(null);
-        }
-        setLoading(false);
-      })();
-    });
-
-    return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string, nombre: string, rol: 'administrador' | 'residente' | 'visitante') => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-    });
-
-    if (error) throw error;
-
-    if (data.user) {
-      const { error: profileError } = await supabase
-        .from('usuarios')
-        .insert({
-          id: data.user.id,
-          email,
-          nombre,
-          rol,
-        });
-
-      if (profileError) throw profileError;
+  const signIn = useCallback(async (email: string, password: string) => {
+    const response = await apiService.login({ email, password });
+    
+    if (response.success && response.token && response.user) {
+      setToken(response.token);
+      setUser(response.user);
+      
+      // Guardar en localStorage
+      localStorage.setItem('auth_token', response.token);
+      localStorage.setItem('auth_user', JSON.stringify(response.user));
+    } else {
+      throw new Error(response.message || 'Error en el login');
     }
-  };
+  }, []);
 
-  const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+  const signOut = useCallback(async () => {
+    try {
+      // Intentar hacer logout en el servidor
+      if (token) {
+        await apiService.logout();
+      }
+    } catch (error) {
+      console.error('Error during logout:', error);
+    } finally {
+      // Limpiar estado local independientemente del resultado del servidor
+      setUser(null);
+      setToken(null);
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('auth_user');
+    }
+  }, [token]);
 
-    if (error) throw error;
-  };
+  // Inicializar el estado desde localStorage
+  useEffect(() => {
+    const initializeAuth = async () => {
+      const storedToken = localStorage.getItem('auth_token');
+      const storedUser = localStorage.getItem('auth_user');
 
-  const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
-    setUserProfile(null);
-    setResidentData(null);
-  };
+      if (storedToken && storedUser) {
+        try {
+          setToken(storedToken);
+          setUser(JSON.parse(storedUser));
+          
+          // Verificar si el token sigue siendo válido
+          await refreshProfile();
+        } catch (error) {
+          console.error('Error loading stored auth data:', error);
+          // Si hay error, limpiar el localStorage
+          localStorage.removeItem('auth_token');
+          localStorage.removeItem('auth_user');
+        }
+      }
+      
+      setLoading(false);
+    };
 
-  const value = {
+    initializeAuth();
+  }, [refreshProfile]);
+
+  const value = useMemo(() => ({
     user,
-    session,
-    userProfile,
-    residentData,
+    token,
     loading,
-    signUp,
     signIn,
     signOut,
     refreshProfile,
-  };
+  }), [user, token, loading, signIn, signOut, refreshProfile]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

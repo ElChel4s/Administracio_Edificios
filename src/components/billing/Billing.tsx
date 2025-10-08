@@ -1,7 +1,39 @@
-import { useState, useEffect } from 'react';
-import { DollarSign, FileText, Download, CreditCard, Calendar } from 'lucide-react';
+import { DollarSign } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { supabase } from '../../lib/supabase';
+
+export const Billing = () => {
+  const { user } = useAuth();
+
+  return (
+    <div className="p-6 space-y-6">
+      <div className="bg-white rounded-lg shadow-sm p-6">
+        <h1 className="text-2xl font-bold text-slate-900 mb-4">
+          Facturación y Pagos
+        </h1>
+        <p className="text-slate-600">
+          Hola {user?.nombre}, aquí podrás ver tus facturas y realizar pagos.
+        </p>
+      </div>
+
+      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+        <div className="flex items-center">
+          <DollarSign className="w-6 h-6 text-yellow-600 mr-3" />
+          <div>
+            <h3 className="text-lg font-semibold text-yellow-800">
+              🚧 En Desarrollo
+            </h3>
+            <p className="text-yellow-700 mt-1">
+              El sistema de facturación se integrará con la API de Laravel próximamente.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/*
+// TODO: Código original comentado temporalmente
 
 interface Invoice {
   id: string;
@@ -408,3 +440,4 @@ export const Billing = () => {
     </div>
   );
 };
+*/

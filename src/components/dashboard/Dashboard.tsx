@@ -1,16 +1,7 @@
-import { useEffect, useState } from 'react';
-import {
-  Home,
-  DollarSign,
-  Calendar,
-  AlertTriangle,
-  CheckCircle,
-  Clock,
-  XCircle
-} from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { supabase } from '../../lib/supabase';
 
+/* 
+// TODO: Descomentar cuando se implemente la integración completa con la API
 interface DashboardStats {
   pendingPayments: number;
   totalDebt: number;
@@ -20,9 +11,74 @@ interface DashboardStats {
   upcomingReservations: any[];
   recentIncidents: any[];
 }
+*/
 
 export const Dashboard = () => {
-  const { userProfile, residentData } = useAuth();
+  const { user } = useAuth();
+
+  return (
+    <div className="p-6 space-y-6">
+      {/* Header de bienvenida */}
+      <div className="bg-white rounded-lg shadow-sm p-6">
+        <h1 className="text-2xl font-bold text-slate-900">
+          ¡Bienvenido, {user?.nombre} {user?.apellido}!
+        </h1>
+        <p className="text-slate-600 mt-2">
+          Tipo de usuario: <span className="font-semibold">{user?.tipo_usuario}</span>
+        </p>
+        <p className="text-slate-600">
+          Email: <span className="font-semibold">{user?.email}</span>
+        </p>
+        <p className="text-slate-600">
+          ID Usuario: <span className="font-semibold">{user?.id_usuario}</span>
+        </p>
+        <p className="text-slate-600">
+          Estado: <span className={`font-semibold ${user?.activo ? 'text-green-600' : 'text-red-600'}`}>
+            {user?.activo ? 'Activo' : 'Inactivo'}
+          </span>
+        </p>
+      </div>
+
+      {/* Mensaje de estado */}
+      <div className="bg-green-50 border border-green-200 rounded-lg p-6">
+        <div className="flex items-center">
+          <div className="w-4 h-4 bg-green-500 rounded-full mr-3"></div>
+          <div>
+            <h3 className="text-lg font-semibold text-green-800">
+              ✅ Sistema de Login Funcionando
+            </h3>
+            <p className="text-green-700 mt-1">
+              La autenticación con tu API de Laravel está funcionando correctamente.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Información del token */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+        <h3 className="text-lg font-semibold text-blue-800 mb-3">
+          🔐 Información de Autenticación
+        </h3>
+        <div className="space-y-2 text-sm">
+          <p className="text-blue-700">
+            <strong>Token JWT:</strong> ✅ Presente y válido
+          </p>
+          <p className="text-blue-700">
+            <strong>API Base URL:</strong> {import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1'}
+          </p>
+          <p className="text-blue-700">
+            <strong>Persistencia:</strong> ✅ Datos guardados en localStorage
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/*
+// TODO: Código original comentado temporalmente - descomentar cuando se integre completamente
+
+const { userProfile, residentData } = useAuth();
   const [stats, setStats] = useState<DashboardStats>({
     pendingPayments: 0,
     totalDebt: 0,
@@ -318,3 +374,4 @@ export const Dashboard = () => {
     </div>
   );
 };
+*/

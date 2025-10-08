@@ -1,7 +1,48 @@
-import { useState, useEffect } from 'react';
-import { User, Phone, Mail, Home, Car, Plus, Trash2, Save } from 'lucide-react';
+import { User } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { supabase } from '../../lib/supabase';
+
+export const Profile = () => {
+  const { user } = useAuth();
+
+  return (
+    <div className="p-6 space-y-6">
+      <div className="bg-white rounded-lg shadow-sm p-6">
+        <h1 className="text-2xl font-bold text-slate-900 mb-4">
+          Mi Perfil
+        </h1>
+        <div className="flex items-center space-x-4">
+          <div className="bg-slate-100 p-4 rounded-full">
+            <User className="w-8 h-8 text-slate-600" />
+          </div>
+          <div>
+            <h2 className="text-xl font-semibold text-slate-900">
+              {user?.nombre} {user?.apellido}
+            </h2>
+            <p className="text-slate-600">{user?.email}</p>
+            <p className="text-slate-600">Tipo: {user?.tipo_usuario}</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+        <div className="flex items-center">
+          <User className="w-6 h-6 text-yellow-600 mr-3" />
+          <div>
+            <h3 className="text-lg font-semibold text-yellow-800">
+              🚧 En Desarrollo
+            </h3>
+            <p className="text-yellow-700 mt-1">
+              La gestión completa del perfil se integrará con la API de Laravel próximamente.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/*
+// TODO: Código original comentado temporalmente
 
 interface Vehicle {
   id: string;
@@ -410,3 +451,4 @@ export const Profile = () => {
     </div>
   );
 };
+*/
