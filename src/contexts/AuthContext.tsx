@@ -6,6 +6,7 @@ interface AuthContextType {
   loading: boolean;
   token: string | null;
   signIn: (email: string, password: string) => Promise<void>;
+  signInWithToken: (token: string, user: User) => void;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -57,6 +58,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
+  const signInWithToken = useCallback((token: string, user: User) => {
+    setToken(token);
+    setUser(user);
+    
+    // Guardar en localStorage
+    localStorage.setItem('auth_token', token);
+    localStorage.setItem('auth_user', JSON.stringify(user));
+  }, []);
+
   const signOut = useCallback(async () => {
     try {
       // Intentar hacer logout en el servidor
@@ -106,9 +116,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     token,
     loading,
     signIn,
+    signInWithToken,
     signOut,
     refreshProfile,
-  }), [user, token, loading, signIn, signOut, refreshProfile]);
+  }), [user, token, loading, signIn, signInWithToken, signOut, refreshProfile]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
