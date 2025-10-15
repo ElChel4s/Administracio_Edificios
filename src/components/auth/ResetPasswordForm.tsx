@@ -84,8 +84,8 @@ export const ResetPasswordForm = ({ email, onBack, onPasswordReset, onResendCode
     
     try {
       await onResendCode();
-    } catch {
-      setError('Error al reenviar el código');
+    } catch (err) {
+      setError(`Error al reenviar el código: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setResending(false);
     }
